@@ -1,4 +1,7 @@
 # PyLoopKit 
+
+## THIS REPOSITORY IS DEPRECATED. Please go to [loop-model-scoring](https://github.com/miriamkw/loop-model-scoring) instead.
+
 This is a fork of PyLoopkit, which is a set of Python tools for building closed-loop insulin delivery apps (Python port of LoopKit).
 The original repository uses Loop issue report data. In this repository the aim is to use Tidepool data instead. Adjustments are mainly made in the file `pyloopkit/pyloop_parser.py`. Please note the [limitations](#limitations) to the current version.
 
