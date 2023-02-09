@@ -16,28 +16,32 @@ from pyloopkit.tidepool_api_parser import (
 
 # Load data from Tidepool API
 # Remember, this is for testing purposes, never push code containing sensitive information and never store these files locally
-EMAIL = 'YOUR_TIDEPOOL_USERNAME'
-PASSWORD = 'YOUR_TIDEPOOL_PASSWORD'
+EMAIL = 'miriamkwolff@outlook.com'
+PASSWORD = 'E8A*y6mNWsGN'
 
 tp_api = TidepoolAPI(EMAIL, PASSWORD)
 tp_api.login()
 
 # Default use the data from the last 24 hours
-start_date = datetime.now() - timedelta(days=1)
-end_date = datetime.now()
+#start_date = datetime.now() - timedelta(days=1)
+#end_date = datetime.now()
 
 # Uncomment the lines below to customize days
-#start_date = datetime(2023, 2, 4)
-#end_date = datetime(2023, 2, 5) # year, month, day
+start_date = datetime(2023, 2, 4)
+end_date = datetime(2023, 2, 5) # year, month, day
 
 # All the data in json format
 user_data = tp_api.get_user_event_data(start_date, end_date)
 
 tp_api.logout()
 
+"""
+with open('json.json', 'r') as f:
+    user_data = json.load(f)
+"""
 # Define the time at which you want to see the predictions
-#time_to_run = datetime(2023, 2, 5, 8, 25)
-time_to_run = None
+time_to_run = datetime(2023, 2, 5, 8, 25)
+#time_to_run = None
 
 # uncomment parse_dictionary_from_previous_run if using data from a previous run
 recommendations = parse_report_and_run(user_data, time_to_run=time_to_run)
