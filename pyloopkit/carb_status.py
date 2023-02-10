@@ -24,7 +24,8 @@ def dynamic_carbs_on_board_helper(
         default_absorption_time,
         delay,
         delta,
-        carb_absorption_time=None
+        carb_absorption_time=None,
+        model='parabolic'
         ):
     """
     Find partial COB for a particular carb entry *dynamically*
@@ -73,11 +74,20 @@ def dynamic_carbs_on_board_helper(
                 ) / 60
             + absorption_dict[6]
         )
-        return carb_math.linear_unabsorbed_carbs(
-            absorption_dict[2],
-            time,
-            estimated_date_duration
-            )
+        if model == 'linear':
+            return carb_math.linear_unabsorbed_carbs(
+                absorption_dict[2],
+                time,
+                estimated_date_duration
+                )
+        elif model == 'parabolic':
+            return carb_math.parabolic_unabsorbed_carbs(
+                absorption_dict[2],
+                time,
+                estimated_date_duration
+                )
+        else:
+            assert('Expected linear or parabolic meal model')
 
     if (not observed_timeline  # no absorption was observed (empty list)
             or not observed_timeline[len(observed_timeline)-1]
@@ -88,11 +98,20 @@ def dynamic_carbs_on_board_helper(
         time = time_interval_since(at_date, absorption_dict[5]) / 60
         absorption_time = absorption_dict[6]
 
-        return carb_math.linear_unabsorbed_carbs(
-            total,
-            time,
-            absorption_time
-        )
+        if model == 'linear':
+            return carb_math.linear_unabsorbed_carbs(
+                total,
+                time,
+                absorption_time
+                )
+        elif model == 'parabolic':
+            return carb_math.parabolic_unabsorbed_carbs(
+                total,
+                time,
+                absorption_time
+                )
+        else:
+            assert('Expected linear or parabolic meal model')
 
     # There was observed absorption
     total = carb_value
@@ -119,6 +138,7 @@ def dynamic_absorbed_carbs(
         carb_absorption_time,
         delay,
         delta,
+        model='parabolic'
         ):
     """
     Find partial absorbed carbs for a particular carb entry *dynamically*
@@ -163,11 +183,22 @@ def dynamic_absorbed_carbs(
                 ) / 60
             + absorption_dict[6]
         )
-        return carb_math.linearly_absorbed_carbs(
-            absorption_dict[2],
-            time,
-            estimated_date_duration
-            )
+
+        if model == 'linear':
+            return carb_math.linearly_absorbed_carbs(
+                absorption_dict[2],
+                time,
+                estimated_date_duration
+                )
+        elif model == 'parabolic':
+            return carb_math.parabolic_absorbed_carbs(
+                absorption_dict[2],
+                time,
+                estimated_date_duration
+                )
+        else:
+            assert('Expected linear or parabolic meal model')
+
 
     if (not observed_timeline  # no absorption was observed (empty list)
             or not observed_timeline[len(observed_timeline)-1]
@@ -178,11 +209,20 @@ def dynamic_absorbed_carbs(
         time = time_interval_since(at_date, absorption_dict[5]) / 60
         absorption_time = absorption_dict[6]
 
-        return absorption_dict[1] + carb_math.linearly_absorbed_carbs(
-            total,
-            time,
-            absorption_time
-        )
+        if model == 'linear':
+            return absorption_dict[1] + carb_math.linearly_absorbed_carbs(
+                total,
+                time,
+                absorption_time
+                )
+        elif model == 'parabolic':
+            return absorption_dict[1] + carb_math.parabolic_absorbed_carbs(
+                total,
+                time,
+                absorption_time
+                )
+        else:
+            assert('Expected linear or parabolic meal model')
 
     sum_ = 0
 

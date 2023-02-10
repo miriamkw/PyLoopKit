@@ -260,7 +260,7 @@ def map_(
                     effect_ends[index],
                     )
 
-    def absorption_result(builder_index):
+    def absorption_result(builder_index, model='parabolic'):
         # absorption list structure: [observed grams absorbed, clamped grams,
         # total carbs in entry, remaining carbs, observed absorption start,
         # observed absorption end, estimated time remaining]
@@ -275,11 +275,22 @@ def map_(
             ) / 60
                 - delay
                 )
-        min_predicted_grams = linearly_absorbed_carbs(
-            entry_grams,
-            time,
-            builder_max_absorb_times[builder_index]
-        )
+        
+        if model == 'linear':
+            min_predicted_grams = linearly_absorbed_carbs(
+                entry_grams,
+                time,
+                builder_max_absorb_times[builder_index]
+            )
+        elif model == 'parabolic':
+            min_predicted_grams = parabolic_absorbed_carbs(
+                entry_grams,
+                time,
+                builder_max_absorb_times[builder_index]
+            )
+        else:
+            assert('Expected linear or parabolic meal model')
+
         clamped_grams = min(
             entry_grams,
             max(min_predicted_grams, observed_grams)
@@ -308,7 +319,7 @@ def map_(
 
     # The timeline of observed absorption,
     # if greater than the minimum required absorption.
-    def clamped_timeline(builder_index):
+    def clamped_timeline(builder_index, model='parabolic'):
         entry_grams = carb_entry_quantities[builder_index]
 
         time = (time_interval_since(
@@ -318,11 +329,21 @@ def map_(
                 - delay
                 )
 
-        min_predicted_grams = linearly_absorbed_carbs(
-            entry_grams,
-            time,
-            builder_max_absorb_times[builder_index]
-        )
+        if model == 'linear':
+            min_predicted_grams = linearly_absorbed_carbs(
+                entry_grams,
+                time,
+                builder_max_absorb_times[builder_index]
+            )
+        elif model == 'parabolic':
+            min_predicted_grams = parabolic_absorbed_carbs(
+                entry_grams,
+                time,
+                builder_max_absorb_times[builder_index]
+            )
+        else: 
+            assert('Expected linear or parabolic meal model')
+
         observed_grams = (
             observed_effects[builder_index]
             / builder_carb_sensitivities[builder_index]
@@ -431,6 +452,22 @@ def parabolic_absorbed_carbs(total, time, absorption_time):
     return total * parabolic_percent_absorption_at_time(time,
                                                         absorption_time
                                                         )
+
+
+def parabolic_unabsorbed_carbs(total, time, absorption_time):
+    """
+    Find unabsorbed carbs using a linear model
+    Parameters:
+    total -- total grams of carbs
+    time -- relative time after eating (in minutes)
+    absorption_time --  time for carbs to completely absorb (in minutes)
+    Output:
+    Grams of unabsorbed carbs
+    """
+    return total * (1 - parabolic_percent_absorption_at_time(time,
+                                                          absorption_time
+                                                          )
+                    )
 
 
 def parabolic_percent_absorption_at_time(time, absorption_time):
@@ -648,7 +685,8 @@ def dynamic_carbs_on_board(
         delta=5,
         start=None,
         end=None,
-        scaler=1
+        scaler=1,
+        model='parabolic'
         ):
     """
     Find the carbs on board *dynamically*
@@ -710,7 +748,8 @@ def dynamic_carbs_on_board(
             default_absorption_time,
             delay,
             delta,
-            carb_absorptions[i]
+            carb_absorptions[i],
+            model=model
             )
 
     while date <= end:
@@ -886,7 +925,8 @@ def dynamic_glucose_effects(
         delta=5,
         start=None,
         end=None,
-        scaler=1
+        scaler=1,
+        model='parabolic'
         ):
     """
     Find the expected effects of carbohydate consumption on blood glucose
@@ -982,6 +1022,7 @@ def dynamic_glucose_effects(
             carb_absorptions[i] or default_absorption_time,
             delay,
             delta,
+            model=model
         )
 
         return csf * partial_carbs_absorbed
