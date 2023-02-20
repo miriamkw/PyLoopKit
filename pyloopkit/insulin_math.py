@@ -12,6 +12,7 @@ Github URL: https://github.com/tidepool-org/LoopKit/blob/
 from math import floor
 from datetime import timedelta, datetime
 import sys
+import numpy as np
 
 from pyloopkit.date import time_interval_since, time_interval_since_reference_date
 from pyloopkit.dose import DoseType
@@ -710,9 +711,9 @@ def insulin_on_board(
             )
 
     while date <= end:
-        iob_sum = 0
-        for i in range(0, len(start_dates)):
-            iob_sum += find_partial_iob(i)
+        iob_indices = np.arange(len(start_dates))
+        partial_iob = np.vectorize(find_partial_iob)(iob_indices)
+        iob_sum = np.sum(partial_iob)
 
         iob_dates.append(date)
         iob_values.append(iob_sum)
@@ -975,9 +976,9 @@ def glucose_effects(
         )
 
     while date <= end:
-        effect_sum = 0
-        for i in range(0, len(dose_start_dates)):
-            effect_sum += find_partial_effect(i)
+        dose_indices = np.arange(len(dose_start_dates))
+        partial_effects = np.vectorize(find_partial_effect)(dose_indices)
+        effect_sum = np.sum(partial_effects)
 
         effect_dates.append(date)
         effect_values.append(effect_sum)
@@ -1008,25 +1009,30 @@ def find_ratio_at_time(ratio_start_times, ratio_end_times,
     assert len(ratio_start_times) == len(ratio_values),\
         "expected input shapes to match"
 
-    for i in range(0, len(ratio_start_times)):
-        if ratio_end_times:
-            if is_time_between(
-                    ratio_start_times[i],
-                    ratio_end_times[i],
-                    time_to_check
-                    ):  # pylint: disable=C0330
-                return ratio_values[i]
-        else:
-            if is_time_between(
-                    ratio_start_times[i],
-                    (ratio_start_times[i+1]
-                     if i+1 < len(ratio_start_times)
-                     else ratio_start_times[0]
-                    ),
-                    time_to_check
-                    ):  # pylint: disable=C0330
-                return ratio_values[i]
-    return 0
+    # Convert input arrays to NumPy arrays
+    ratio_start_times = np.asarray(ratio_start_times)
+    ratio_end_times = np.asarray(ratio_end_times)
+    ratio_values = np.asarray(ratio_values)
+
+    # Calculate the time range for each ratio
+    if ratio_end_times.any():
+        time_ranges = np.stack((ratio_start_times, ratio_end_times), axis=-1)
+    else:
+        time_ranges = np.stack(
+            (ratio_start_times, np.roll(ratio_start_times, -1)), axis=-1
+        )
+
+    # Check if time_to_check is between each time range
+    is_between = np.logical_and(
+        time_to_check.time() >= time_ranges[:, 0],
+        time_to_check.time() < time_ranges[:, 1]
+    )
+
+    # Find the first ratio value that matches
+    if is_between.any():
+        return ratio_values[is_between][0]
+    else:
+        return 0
 
 
 def is_time_between(start, end, time_to_check):

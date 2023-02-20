@@ -11,6 +11,8 @@ https://github.com/tidepool-org/LoopKit/blob/
 import sys
 from datetime import timedelta
 
+import numpy as np
+
 from pyloopkit.insulin_math import find_ratio_at_time
 from pyloopkit.date import (time_interval_since,
                             date_floored_to_time_interval,
@@ -622,9 +624,9 @@ def carbs_on_board(
             )
 
     while date <= end:
-        cob_sum = 0
-        for i in range(0, len(carb_starts)):
-            cob_sum += find_partial_effect(i)
+        cob_indices = np.arange(len(carb_starts))
+        partial_effects = np.vectorize(find_partial_effect)(cob_indices)
+        cob_sum = np.sum(partial_effects)
 
         cob_start_dates.append(date)
         cob_values.append(cob_sum)
@@ -753,9 +755,9 @@ def dynamic_carbs_on_board(
             )
 
     while date <= end:
-        cob_sum = 0
-        for i in range(0, len(carb_starts)):
-            cob_sum += find_partial_cob(i)
+        cob_indices = np.arange(len(carb_starts))
+        partial_effects = np.vectorize(find_partial_cob)(cob_indices)
+        cob_sum = np.sum(partial_effects)
 
         cob_dates.append(date)
         cob_values.append(cob_sum)
