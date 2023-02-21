@@ -1009,30 +1009,25 @@ def find_ratio_at_time(ratio_start_times, ratio_end_times,
     assert len(ratio_start_times) == len(ratio_values),\
         "expected input shapes to match"
 
-    # Convert input arrays to NumPy arrays
-    ratio_start_times = np.asarray(ratio_start_times)
-    ratio_end_times = np.asarray(ratio_end_times)
-    ratio_values = np.asarray(ratio_values)
-
-    # Calculate the time range for each ratio
-    if ratio_end_times.any():
-        time_ranges = np.stack((ratio_start_times, ratio_end_times), axis=-1)
-    else:
-        time_ranges = np.stack(
-            (ratio_start_times, np.roll(ratio_start_times, -1)), axis=-1
-        )
-
-    # Check if time_to_check is between each time range
-    is_between = np.logical_and(
-        time_to_check.time() >= time_ranges[:, 0],
-        time_to_check.time() < time_ranges[:, 1]
-    )
-
-    # Find the first ratio value that matches
-    if is_between.any():
-        return ratio_values[is_between][0]
-    else:
-        return 0
+    for i in range(0, len(ratio_start_times)):
+        if ratio_end_times:
+            if is_time_between(
+                    ratio_start_times[i],
+                    ratio_end_times[i],
+                    time_to_check
+            ):  # pylint: disable=C0330
+                return ratio_values[i]
+        else:
+            if is_time_between(
+                    ratio_start_times[i],
+                    (ratio_start_times[i + 1]
+                    if i + 1 < len(ratio_start_times)
+                    else ratio_start_times[0]
+                    ),
+                    time_to_check
+            ):  # pylint: disable=C0330
+                return ratio_values[i]
+    return 0
 
 
 def is_time_between(start, end, time_to_check):
